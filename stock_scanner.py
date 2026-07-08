@@ -125,8 +125,19 @@ def get_sti_tickers() -> list[str]:
         "G13.SI", "C09.SI", "S68.SI", "A17U.SI", "9CI.SI"
     ]
 
+def get_us_composite_tickers() -> list[str]:
+    """Combines S&P 500 and Nasdaq 100 for a broader US market view."""
+    sp500 = get_sp500_tickers()
+    nasdaq100 = get_nasdaq100_tickers()
+    # Combine and create a unique list
+    return sorted(list(set(sp500 + nasdaq100)))
+
 UNIVERSE_BUILDERS = {
-    "us": {"sp500": get_sp500_tickers, "nasdaq100": get_nasdaq100_tickers},
+    "us": {
+        "us_composite": get_us_composite_tickers,
+        "sp500": get_sp500_tickers, 
+        "nasdaq100": get_nasdaq100_tickers
+    },
     "india": {"nifty50": get_nifty50_tickers},
     "singapore": {"sti": get_sti_tickers},
 }

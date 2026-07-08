@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-07-08T12:23:18.590728+00:00",
+  "generated_at": "2026-07-08T12:40:43.046920+00:00",
   "market": "us",
-  "universe": "sp500",
-  "universe_size": 503,
-  "scanned": 437,
+  "universe": "us_composite",
+  "universe_size": 518,
+  "scanned": 315,
   "top_n": 10,
   "sector_filter": null,
   "sectors": [
@@ -19,6 +19,8 @@
     "Technology",
     "Utilities"
   ],
+  "min_price": null,
+  "max_price": 200.0,
   "criteria": {
     "long": {
       "rsi_band": [
@@ -42,8 +44,8 @@
       "sector": "Financial Services",
       "industry": "Insurance - Life",
       "price": 121.48999786376953,
-      "rsi14": 62.0772439898702,
-      "dist_from_200sma_pct": 9.288547170718225,
+      "rsi14": 62.077243993043076,
+      "dist_from_200sma_pct": 9.288547245724727,
       "dist_from_50sma_pct": 4.646919109435794,
       "pe_ratio": 13.774377,
       "market_cap": 61836574720,
@@ -149,124 +151,12 @@
       "rank": 1
     },
     {
-      "ticker": "DELL",
-      "name": "Dell Technologies Inc.",
-      "sector": "Technology",
-      "industry": "Computer Hardware",
-      "price": 417.2799987792969,
-      "rsi14": 57.71338495990477,
-      "dist_from_200sma_pct": 120.77600551928268,
-      "dist_from_50sma_pct": 26.013699783494587,
-      "pe_ratio": 33.222927,
-      "market_cap": 269622296576,
-      "revenue_growth": 0.875,
-      "eps": 12.56,
-      "eps_growth": 2.563,
-      "debt_to_equity": null,
-      "avg_volume_3m": 8675390.476190476,
-      "fundamental_score": 89.4,
-      "technical_score": 93.6,
-      "composite_score": 91.5,
-      "passes_hard_filter": true,
-      "fundamental_components": [
-        {
-          "label": "Revenue growth",
-          "weight": 0.35,
-          "score": 100.0,
-          "detail": "YoY revenue +87.5%"
-        },
-        {
-          "label": "EPS quality",
-          "weight": 0.25,
-          "score": 100.0,
-          "detail": "EPS growth +256.3%, trailing EPS 12.56"
-        },
-        {
-          "label": "Leverage",
-          "weight": 0.2,
-          "score": 66.7,
-          "detail": "Debt/Equity no data (lower is better)"
-        },
-        {
-          "label": "Valuation",
-          "weight": 0.2,
-          "score": 80.2,
-          "detail": "P/E 33.2 vs ~20x sweet spot"
-        }
-      ],
-      "technical_components": [
-        {
-          "label": "Above both SMAs",
-          "weight": 0.3,
-          "score": 100,
-          "detail": "Price 417.28 vs SMA50 331.14 / SMA200 189.01"
-        },
-        {
-          "label": "Trend alignment",
-          "weight": 0.2,
-          "score": 100,
-          "detail": "SMA50 > SMA200 (uptrend)"
-        },
-        {
-          "label": "Distance vs 200SMA",
-          "weight": 0.2,
-          "score": 100.0,
-          "detail": "+120.8% from 200-day SMA"
-        },
-        {
-          "label": "RSI momentum",
-          "weight": 0.3,
-          "score": 78.7,
-          "detail": "RSI(14) 57.7; ideal band 55-70"
-        }
-      ],
-      "filter_checks": [
-        {
-          "label": "Revenue growth > 5% (YoY)",
-          "passed": true,
-          "detail": "YoY revenue +87.5%",
-          "group": "required"
-        },
-        {
-          "label": "EPS growth > 5% (YoY)",
-          "passed": true,
-          "detail": "YoY EPS growth +256.3%",
-          "group": "required"
-        },
-        {
-          "label": "EPS positive",
-          "passed": true,
-          "detail": "trailing EPS 12.56",
-          "group": "required"
-        },
-        {
-          "label": "Debt/Equity under 100",
-          "passed": true,
-          "detail": "D/E no data",
-          "group": "required"
-        },
-        {
-          "label": "Price above 50 & 200-day SMA",
-          "passed": true,
-          "detail": "price 417.28, SMA50 331.14, SMA200 189.01",
-          "group": "required"
-        },
-        {
-          "label": "RSI in 55\u201370 band",
-          "passed": true,
-          "detail": "RSI(14) 57.7",
-          "group": "required"
-        }
-      ],
-      "rank": 2
-    },
-    {
       "ticker": "BEN",
       "name": "Franklin Resources, Inc.",
       "sector": "Financial Services",
       "industry": "Asset Management",
       "price": 34.36000061035156,
-      "rsi14": 67.69995866580031,
+      "rsi14": 67.699958666248,
       "dist_from_200sma_pct": 34.05881701877571,
       "dist_from_50sma_pct": 9.50034617467334,
       "pe_ratio": 26.22901,
@@ -370,7 +260,7 @@
           "group": "required"
         }
       ],
-      "rank": 3
+      "rank": 2
     },
     {
       "ticker": "MNST",
@@ -482,119 +372,7 @@
           "group": "required"
         }
       ],
-      "rank": 4
-    },
-    {
-      "ticker": "DDOG",
-      "name": "Datadog, Inc.",
-      "sector": "Technology",
-      "industry": "Software - Application",
-      "price": 256.80999755859375,
-      "rsi14": 65.04039818034539,
-      "dist_from_200sma_pct": 63.261074677977426,
-      "dist_from_50sma_pct": 20.57996217100743,
-      "pe_ratio": 658.4872,
-      "market_cap": 91414134784,
-      "revenue_growth": 0.322,
-      "eps": 0.39,
-      "eps_growth": 1.134,
-      "debt_to_equity": 32.221,
-      "avg_volume_3m": 5849546.031746032,
-      "fundamental_score": 77.9,
-      "technical_score": 96.6,
-      "composite_score": 87.2,
-      "passes_hard_filter": true,
-      "fundamental_components": [
-        {
-          "label": "Revenue growth",
-          "weight": 0.35,
-          "score": 100.0,
-          "detail": "YoY revenue +32.2%"
-        },
-        {
-          "label": "EPS quality",
-          "weight": 0.25,
-          "score": 100.0,
-          "detail": "EPS growth +113.4%, trailing EPS 0.39"
-        },
-        {
-          "label": "Leverage",
-          "weight": 0.2,
-          "score": 89.3,
-          "detail": "Debt/Equity 32 (lower is better)"
-        },
-        {
-          "label": "Valuation",
-          "weight": 0.2,
-          "score": 0.0,
-          "detail": "P/E 658.5 vs ~20x sweet spot"
-        }
-      ],
-      "technical_components": [
-        {
-          "label": "Above both SMAs",
-          "weight": 0.3,
-          "score": 100,
-          "detail": "Price 256.81 vs SMA50 212.98 / SMA200 157.30"
-        },
-        {
-          "label": "Trend alignment",
-          "weight": 0.2,
-          "score": 100,
-          "detail": "SMA50 > SMA200 (uptrend)"
-        },
-        {
-          "label": "Distance vs 200SMA",
-          "weight": 0.2,
-          "score": 100.0,
-          "detail": "+63.3% from 200-day SMA"
-        },
-        {
-          "label": "RSI momentum",
-          "weight": 0.3,
-          "score": 88.7,
-          "detail": "RSI(14) 65.0; ideal band 55-70"
-        }
-      ],
-      "filter_checks": [
-        {
-          "label": "Revenue growth > 5% (YoY)",
-          "passed": true,
-          "detail": "YoY revenue +32.2%",
-          "group": "required"
-        },
-        {
-          "label": "EPS growth > 5% (YoY)",
-          "passed": true,
-          "detail": "YoY EPS growth +113.4%",
-          "group": "required"
-        },
-        {
-          "label": "EPS positive",
-          "passed": true,
-          "detail": "trailing EPS 0.39",
-          "group": "required"
-        },
-        {
-          "label": "Debt/Equity under 100",
-          "passed": true,
-          "detail": "D/E 32",
-          "group": "required"
-        },
-        {
-          "label": "Price above 50 & 200-day SMA",
-          "passed": true,
-          "detail": "price 256.81, SMA50 212.98, SMA200 157.30",
-          "group": "required"
-        },
-        {
-          "label": "RSI in 55\u201370 band",
-          "passed": true,
-          "detail": "RSI(14) 65.0",
-          "group": "required"
-        }
-      ],
-      "rank": 5
+      "rank": 3
     },
     {
       "ticker": "NTRS",
@@ -602,8 +380,8 @@
       "sector": "Financial Services",
       "industry": "Asset Management",
       "price": 181.38999938964844,
-      "rsi14": 66.2118019114138,
-      "dist_from_200sma_pct": 24.389963877963137,
+      "rsi14": 66.21180191147202,
+      "dist_from_200sma_pct": 24.389963812883146,
       "dist_from_50sma_pct": 7.296568492446765,
       "pe_ratio": 18.954023,
       "market_cap": 33565722624,
@@ -706,7 +484,7 @@
           "group": "required"
         }
       ],
-      "rank": 6
+      "rank": 4
     },
     {
       "ticker": "DXCM",
@@ -818,7 +596,7 @@
           "group": "required"
         }
       ],
-      "rank": 7
+      "rank": 5
     },
     {
       "ticker": "C",
@@ -826,8 +604,8 @@
       "sector": "Financial Services",
       "industry": "Banks - Diversified",
       "price": 140.77000427246094,
-      "rsi14": 55.422042381622475,
-      "dist_from_200sma_pct": 22.40559648819698,
+      "rsi14": 55.42204238351039,
+      "dist_from_200sma_pct": 22.405596569401926,
       "dist_from_50sma_pct": 6.28497354707788,
       "pe_ratio": 17.400496,
       "market_cap": 240094068736,
@@ -930,7 +708,7 @@
           "group": "required"
         }
       ],
-      "rank": 8
+      "rank": 6
     },
     {
       "ticker": "BNY",
@@ -938,8 +716,8 @@
       "sector": "Financial Services",
       "industry": "Banks - Diversified",
       "price": 152.91000366210938,
-      "rsi14": 69.33338329168011,
-      "dist_from_200sma_pct": 26.045846573510072,
+      "rsi14": 69.33338329503765,
+      "dist_from_200sma_pct": 26.04584689059183,
       "dist_from_50sma_pct": 9.370487193601962,
       "pe_ratio": 18.971464,
       "market_cap": 104954224640,
@@ -1042,7 +820,7 @@
           "group": "required"
         }
       ],
-      "rank": 9
+      "rank": 7
     },
     {
       "ticker": "CFG",
@@ -1050,8 +828,8 @@
       "sector": "Financial Services",
       "industry": "Banks - Regional",
       "price": 71.77999877929688,
-      "rsi14": 68.94017758880375,
-      "dist_from_200sma_pct": 21.276914369490523,
+      "rsi14": 68.94017758440675,
+      "dist_from_200sma_pct": 21.27691460398583,
       "dist_from_50sma_pct": 10.086705952492478,
       "pe_ratio": 17.00948,
       "market_cap": 30354466816,
@@ -1151,6 +929,230 @@
           "label": "RSI in 55\u201370 band",
           "passed": true,
           "detail": "RSI(14) 68.9",
+          "group": "required"
+        }
+      ],
+      "rank": 8
+    },
+    {
+      "ticker": "KEY",
+      "name": "KeyCorp",
+      "sector": "Financial Services",
+      "industry": "Banks - Regional",
+      "price": 23.3700008392334,
+      "rsi14": 63.87550208157334,
+      "dist_from_200sma_pct": 15.37777604512579,
+      "dist_from_50sma_pct": 6.168400910737355,
+      "pe_ratio": 14.337424,
+      "market_cap": 25224847360,
+      "revenue_growth": 0.118,
+      "eps": 1.63,
+      "eps_growth": 0.289,
+      "debt_to_equity": null,
+      "avg_volume_3m": 12018722.222222222,
+      "fundamental_score": 75.8,
+      "technical_score": 94.3,
+      "composite_score": 85.0,
+      "passes_hard_filter": true,
+      "fundamental_components": [
+        {
+          "label": "Revenue growth",
+          "weight": 0.35,
+          "score": 69.7,
+          "detail": "YoY revenue +11.8%"
+        },
+        {
+          "label": "EPS quality",
+          "weight": 0.25,
+          "score": 78.9,
+          "detail": "EPS growth +28.9%, trailing EPS 1.63"
+        },
+        {
+          "label": "Leverage",
+          "weight": 0.2,
+          "score": 66.7,
+          "detail": "Debt/Equity no data (lower is better)"
+        },
+        {
+          "label": "Valuation",
+          "weight": 0.2,
+          "score": 91.5,
+          "detail": "P/E 14.3 vs ~20x sweet spot"
+        }
+      ],
+      "technical_components": [
+        {
+          "label": "Above both SMAs",
+          "weight": 0.3,
+          "score": 100,
+          "detail": "Price 23.37 vs SMA50 22.01 / SMA200 20.26"
+        },
+        {
+          "label": "Trend alignment",
+          "weight": 0.2,
+          "score": 100,
+          "detail": "SMA50 > SMA200 (uptrend)"
+        },
+        {
+          "label": "Distance vs 200SMA",
+          "weight": 0.2,
+          "score": 80.8,
+          "detail": "+15.4% from 200-day SMA"
+        },
+        {
+          "label": "RSI momentum",
+          "weight": 0.3,
+          "score": 93.9,
+          "detail": "RSI(14) 63.9; ideal band 55-70"
+        }
+      ],
+      "filter_checks": [
+        {
+          "label": "Revenue growth > 5% (YoY)",
+          "passed": true,
+          "detail": "YoY revenue +11.8%",
+          "group": "required"
+        },
+        {
+          "label": "EPS growth > 5% (YoY)",
+          "passed": true,
+          "detail": "YoY EPS growth +28.9%",
+          "group": "required"
+        },
+        {
+          "label": "EPS positive",
+          "passed": true,
+          "detail": "trailing EPS 1.63",
+          "group": "required"
+        },
+        {
+          "label": "Debt/Equity under 100",
+          "passed": true,
+          "detail": "D/E no data",
+          "group": "required"
+        },
+        {
+          "label": "Price above 50 & 200-day SMA",
+          "passed": true,
+          "detail": "price 23.37, SMA50 22.01, SMA200 20.26",
+          "group": "required"
+        },
+        {
+          "label": "RSI in 55\u201370 band",
+          "passed": true,
+          "detail": "RSI(14) 63.9",
+          "group": "required"
+        }
+      ],
+      "rank": 9
+    },
+    {
+      "ticker": "FTNT",
+      "name": "Fortinet, Inc.",
+      "sector": "Technology",
+      "industry": "Software - Infrastructure",
+      "price": 158.6699981689453,
+      "rsi14": 65.73542687817427,
+      "dist_from_200sma_pct": 68.87781795238325,
+      "dist_from_50sma_pct": 22.214792610518643,
+      "pe_ratio": 61.26255,
+      "market_cap": 116249321472,
+      "revenue_growth": 0.201,
+      "eps": 2.59,
+      "eps_growth": 0.233,
+      "debt_to_equity": 57.31,
+      "avg_volume_3m": 6444630.158730159,
+      "fundamental_score": 71.4,
+      "technical_score": 95.7,
+      "composite_score": 83.6,
+      "passes_hard_filter": true,
+      "fundamental_components": [
+        {
+          "label": "Revenue growth",
+          "weight": 0.35,
+          "score": 83.5,
+          "detail": "YoY revenue +20.1%"
+        },
+        {
+          "label": "EPS quality",
+          "weight": 0.25,
+          "score": 73.3,
+          "detail": "EPS growth +23.3%, trailing EPS 2.59"
+        },
+        {
+          "label": "Leverage",
+          "weight": 0.2,
+          "score": 80.9,
+          "detail": "Debt/Equity 57 (lower is better)"
+        },
+        {
+          "label": "Valuation",
+          "weight": 0.2,
+          "score": 38.1,
+          "detail": "P/E 61.3 vs ~20x sweet spot"
+        }
+      ],
+      "technical_components": [
+        {
+          "label": "Above both SMAs",
+          "weight": 0.3,
+          "score": 100,
+          "detail": "Price 158.67 vs SMA50 129.83 / SMA200 93.96"
+        },
+        {
+          "label": "Trend alignment",
+          "weight": 0.2,
+          "score": 100,
+          "detail": "SMA50 > SMA200 (uptrend)"
+        },
+        {
+          "label": "Distance vs 200SMA",
+          "weight": 0.2,
+          "score": 100.0,
+          "detail": "+68.9% from 200-day SMA"
+        },
+        {
+          "label": "RSI momentum",
+          "weight": 0.3,
+          "score": 85.6,
+          "detail": "RSI(14) 65.7; ideal band 55-70"
+        }
+      ],
+      "filter_checks": [
+        {
+          "label": "Revenue growth > 5% (YoY)",
+          "passed": true,
+          "detail": "YoY revenue +20.1%",
+          "group": "required"
+        },
+        {
+          "label": "EPS growth > 5% (YoY)",
+          "passed": true,
+          "detail": "YoY EPS growth +23.3%",
+          "group": "required"
+        },
+        {
+          "label": "EPS positive",
+          "passed": true,
+          "detail": "trailing EPS 2.59",
+          "group": "required"
+        },
+        {
+          "label": "Debt/Equity under 100",
+          "passed": true,
+          "detail": "D/E 57",
+          "group": "required"
+        },
+        {
+          "label": "Price above 50 & 200-day SMA",
+          "passed": true,
+          "detail": "price 158.67, SMA50 129.83, SMA200 93.96",
+          "group": "required"
+        },
+        {
+          "label": "RSI in 55\u201370 band",
+          "passed": true,
+          "detail": "RSI(14) 65.7",
           "group": "required"
         }
       ],
@@ -1271,13 +1273,125 @@
       "rank": 1
     },
     {
+      "ticker": "MSTR",
+      "name": "Strategy Inc",
+      "sector": "Technology",
+      "industry": "Software - Application",
+      "price": 97.36000061035156,
+      "rsi14": 38.919794674619645,
+      "dist_from_200sma_pct": -45.587614094299845,
+      "dist_from_50sma_pct": -31.408216248818583,
+      "pe_ratio": null,
+      "market_cap": 34832343040,
+      "revenue_growth": 0.119,
+      "eps": -36.99,
+      "eps_growth": null,
+      "debt_to_equity": 18.094,
+      "avg_volume_3m": 21255374.603174604,
+      "fundamental_score": 43.8,
+      "technical_score": 98.1,
+      "composite_score": 70.9,
+      "passes_hard_filter": true,
+      "fundamental_components": [
+        {
+          "label": "Revenue weakness",
+          "weight": 0.35,
+          "score": 30.2,
+          "detail": "YoY revenue +11.9%"
+        },
+        {
+          "label": "EPS deterioration",
+          "weight": 0.25,
+          "score": 80.0,
+          "detail": "EPS growth no data, trailing EPS -36.99 (unprofitable: +30 to short case)"
+        },
+        {
+          "label": "Leverage risk",
+          "weight": 0.2,
+          "score": 6.0,
+          "detail": "Debt/Equity 18 (higher is worse)"
+        },
+        {
+          "label": "Valuation stretch",
+          "weight": 0.2,
+          "score": 60,
+          "detail": "P/E unavailable or negative (red flag)"
+        }
+      ],
+      "technical_components": [
+        {
+          "label": "Below both SMAs",
+          "weight": 0.3,
+          "score": 100,
+          "detail": "Price 97.36 vs SMA50 141.94 / SMA200 178.93"
+        },
+        {
+          "label": "Trend alignment",
+          "weight": 0.2,
+          "score": 100,
+          "detail": "SMA50 < SMA200 (downtrend)"
+        },
+        {
+          "label": "Distance vs 200SMA",
+          "weight": 0.2,
+          "score": 100.0,
+          "detail": "-45.6% from 200-day SMA"
+        },
+        {
+          "label": "RSI momentum",
+          "weight": 0.3,
+          "score": 93.7,
+          "detail": "RSI(14) 38.9; ideal band 30-45"
+        }
+      ],
+      "filter_checks": [
+        {
+          "label": "Revenue declining > 5% (YoY)",
+          "passed": false,
+          "detail": "YoY revenue +11.9%",
+          "group": "any_one"
+        },
+        {
+          "label": "EPS negative or declining > 5%",
+          "passed": true,
+          "detail": "trailing EPS -36.99, YoY growth no data",
+          "group": "any_one"
+        },
+        {
+          "label": "P/E above 50 (very stretched)",
+          "passed": false,
+          "detail": "P/E no data",
+          "group": "any_one"
+        },
+        {
+          "label": "Debt/Equity above 250 (high risk)",
+          "passed": false,
+          "detail": "D/E 18",
+          "group": "any_one"
+        },
+        {
+          "label": "Price below 50 & 200-day SMA",
+          "passed": true,
+          "detail": "price 97.36, SMA50 141.94, SMA200 178.93",
+          "group": "required"
+        },
+        {
+          "label": "RSI in 30\u201345 band",
+          "passed": true,
+          "detail": "RSI(14) 38.9",
+          "group": "required"
+        }
+      ],
+      "rank": 2
+    },
+    {
       "ticker": "ZTS",
       "name": "Zoetis Inc.",
       "sector": "Healthcare",
       "industry": "Drug Manufacturers - Specialty & Generic",
       "price": 76.29000091552734,
-      "rsi14": 43.38812929638094,
-      "dist_from_200sma_pct": -34.17601169350411,
+      "rsi14": 43.388129296619084,
+      "dist_from_200sma_pct": -34.17601160684368,
       "dist_from_50sma_pct": -9.820562084202038,
       "pe_ratio": 12.506557,
       "market_cap": 31982913536,
@@ -1380,7 +1494,7 @@
           "group": "required"
         }
       ],
-      "rank": 2
+      "rank": 3
     },
     {
       "ticker": "FOX",
@@ -1388,7 +1502,7 @@
       "sector": "Communication Services",
       "industry": "Entertainment",
       "price": 49.20000076293945,
-      "rsi14": 44.00222116255624,
+      "rsi14": 44.00222116255429,
       "dist_from_200sma_pct": -13.403694119449186,
       "dist_from_50sma_pct": -10.396711869034792,
       "pe_ratio": 13.155081,
@@ -1492,7 +1606,7 @@
           "group": "required"
         }
       ],
-      "rank": 3
+      "rank": 4
     },
     {
       "ticker": "KR",
@@ -1500,8 +1614,8 @@
       "sector": "Consumer Defensive",
       "industry": "Grocery Stores",
       "price": 58.540000915527344,
-      "rsi14": 43.4874856606999,
-      "dist_from_200sma_pct": -10.452867267879922,
+      "rsi14": 43.48748566065029,
+      "dist_from_200sma_pct": -10.452867215626975,
       "dist_from_50sma_pct": -7.408585863094011,
       "pe_ratio": 34.233917,
       "market_cap": 35864375296,
@@ -1604,7 +1718,7 @@
           "group": "required"
         }
       ],
-      "rank": 4
+      "rank": 5
     },
     {
       "ticker": "LDOS",
@@ -1612,7 +1726,7 @@
       "sector": "Technology",
       "industry": "Information Technology Services",
       "price": 108.56999969482422,
-      "rsi14": 40.55256657869693,
+      "rsi14": 40.5525665789034,
       "dist_from_200sma_pct": -34.64128697254157,
       "dist_from_50sma_pct": -11.76866326393794,
       "pe_ratio": 9.951421,
@@ -1716,7 +1830,7 @@
           "group": "required"
         }
       ],
-      "rank": 5
+      "rank": 6
     },
     {
       "ticker": "LYB",
@@ -1724,7 +1838,7 @@
       "sector": "Basic Materials",
       "industry": "Specialty Chemicals",
       "price": 54.599998474121094,
-      "rsi14": 30.1846916940208,
+      "rsi14": 30.184691694022277,
       "dist_from_200sma_pct": -3.6362966687059544,
       "dist_from_50sma_pct": -17.540597924067356,
       "pe_ratio": null,
@@ -1828,7 +1942,7 @@
           "group": "required"
         }
       ],
-      "rank": 6
+      "rank": 7
     },
     {
       "ticker": "DOW",
@@ -1836,8 +1950,8 @@
       "sector": "Basic Materials",
       "industry": "Chemicals",
       "price": 28.639999389648438,
-      "rsi14": 34.74597871224512,
-      "dist_from_200sma_pct": -2.4854480637036698,
+      "rsi14": 34.74597871573987,
+      "dist_from_200sma_pct": -2.4854481270316926,
       "dist_from_50sma_pct": -16.999078943212066,
       "pe_ratio": null,
       "market_cap": 20642033664,
@@ -1940,7 +2054,7 @@
           "group": "required"
         }
       ],
-      "rank": 7
+      "rank": 8
     },
     {
       "ticker": "APO",
@@ -1948,7 +2062,7 @@
       "sector": "Financial Services",
       "industry": "Asset Management",
       "price": 119.33000183105469,
-      "rsi14": 39.89557981213664,
+      "rsi14": 39.895579805199866,
       "dist_from_200sma_pct": -6.143569658104463,
       "dist_from_50sma_pct": -7.055534540685596,
       "pe_ratio": 75.050316,
@@ -2052,7 +2166,7 @@
           "group": "required"
         }
       ],
-      "rank": 8
+      "rank": 9
     },
     {
       "ticker": "T",
@@ -2060,8 +2174,8 @@
       "sector": "Communication Services",
       "industry": "Telecom Services",
       "price": 21.09000015258789,
-      "rsi14": 35.4930826946497,
-      "dist_from_200sma_pct": -16.683223676298724,
+      "rsi14": 35.493082696095414,
+      "dist_from_200sma_pct": -16.683223550739566,
       "dist_from_50sma_pct": -11.657520240322256,
       "pe_ratio": 7.10101,
       "market_cap": 146540462080,
@@ -2161,118 +2275,6 @@
           "label": "RSI in 30\u201345 band",
           "passed": true,
           "detail": "RSI(14) 35.5",
-          "group": "required"
-        }
-      ],
-      "rank": 9
-    },
-    {
-      "ticker": "MOS",
-      "name": "Mosaic Company (The)",
-      "sector": "Basic Materials",
-      "industry": "Agricultural Inputs",
-      "price": 21.1200008392334,
-      "rsi14": 43.955692890158176,
-      "dist_from_200sma_pct": -17.802004599640156,
-      "dist_from_50sma_pct": -5.101184963374175,
-      "pe_ratio": 150.85715,
-      "market_cap": 6712921600,
-      "revenue_growth": 0.144,
-      "eps": 0.14,
-      "eps_growth": null,
-      "debt_to_equity": 48.19,
-      "avg_volume_3m": 9260722.222222222,
-      "fundamental_score": 44.8,
-      "technical_score": 88.5,
-      "composite_score": 66.6,
-      "passes_hard_filter": true,
-      "fundamental_components": [
-        {
-          "label": "Revenue weakness",
-          "weight": 0.35,
-          "score": 26.0,
-          "detail": "YoY revenue +14.4%"
-        },
-        {
-          "label": "EPS deterioration",
-          "weight": 0.25,
-          "score": 50.0,
-          "detail": "EPS growth no data, trailing EPS 0.14"
-        },
-        {
-          "label": "Leverage risk",
-          "weight": 0.2,
-          "score": 16.1,
-          "detail": "Debt/Equity 48 (higher is worse)"
-        },
-        {
-          "label": "Valuation stretch",
-          "weight": 0.2,
-          "score": 100.0,
-          "detail": "P/E 150.9; multiples above ~20x add to the short case"
-        }
-      ],
-      "technical_components": [
-        {
-          "label": "Below both SMAs",
-          "weight": 0.3,
-          "score": 100,
-          "detail": "Price 21.12 vs SMA50 22.26 / SMA200 25.69"
-        },
-        {
-          "label": "Trend alignment",
-          "weight": 0.2,
-          "score": 100,
-          "detail": "SMA50 < SMA200 (downtrend)"
-        },
-        {
-          "label": "Distance vs 200SMA",
-          "weight": 0.2,
-          "score": 85.6,
-          "detail": "-17.8% from 200-day SMA"
-        },
-        {
-          "label": "RSI momentum",
-          "weight": 0.3,
-          "score": 71.3,
-          "detail": "RSI(14) 44.0; ideal band 30-45"
-        }
-      ],
-      "filter_checks": [
-        {
-          "label": "Revenue declining > 5% (YoY)",
-          "passed": false,
-          "detail": "YoY revenue +14.4%",
-          "group": "any_one"
-        },
-        {
-          "label": "EPS negative or declining > 5%",
-          "passed": false,
-          "detail": "trailing EPS 0.14, YoY growth no data",
-          "group": "any_one"
-        },
-        {
-          "label": "P/E above 50 (very stretched)",
-          "passed": true,
-          "detail": "P/E 150.9",
-          "group": "any_one"
-        },
-        {
-          "label": "Debt/Equity above 250 (high risk)",
-          "passed": false,
-          "detail": "D/E 48",
-          "group": "any_one"
-        },
-        {
-          "label": "Price below 50 & 200-day SMA",
-          "passed": true,
-          "detail": "price 21.12, SMA50 22.26, SMA200 25.69",
-          "group": "required"
-        },
-        {
-          "label": "RSI in 30\u201345 band",
-          "passed": true,
-          "detail": "RSI(14) 44.0",
           "group": "required"
         }
       ],
