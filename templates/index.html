@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stock Hunt — Long/Short Scanner</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+<script>
+  // Apply the saved theme before first paint so there's no light/dark flash.
+  (function () {
+    var t = localStorage.getItem("theme");
+    if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+  })();
+</script>
+<style>
+  /* ---- design tokens (light) ---- */
+  :root {
+    --page:        #f9f9f7;
+    --surface:     #fcfcfb;
+    --ink:         #0b0b0b;
+    --ink-2:       #52514e;
+    --ink-muted:   #898781;
+    --hairline:    #e1e0d9;
+    --border:      rgba(11,11,11,0.10);
+    --accent:      #2a78d6;   /* blue: magnitude fills (meters) */
+    --accent-track:#cde2fb;   /* lighter step of the same ramp */
+    --good:        #0ca30c;
+    --good-text:   #006300;
+    --critical:    #d03b3b;
+    --serious:     #ec835a;
+    --good-tint:     rgba(12,163,12,0.10);
+    --critical-tint: rgba(208,59,59,0.10);
+    --serious-tint:  rgba(236,131,90,0.14);
+  }
+  /* Dark tokens apply when the OS prefers dark (and the user hasn't forced
+     light), OR when the user explicitly picked dark via the toggle. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page:        #0d0d0d;
+      --surface:     #1a1a19;
+      --ink:         #ffffff;
+      --ink-2:       #c3c2b7;
+      --ink-muted:   #898781;
+      --hairline:    #2c2c2a;
+      --border:      rgba(255,255,255,0.10);
+      --accent:      #3987e5;
+      --accent-track:#0d366b;
+      --good:        #0ca30c;
+      --good-text:   #0ca30c;
+      --critical:    #d03b3b;
+      --serious:     #ec835a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page:        #0d0d0d;
+    --surface:     #1a1a19;
+    --ink:         #ffffff;
+    --ink-2:       #c3c2b7;
+    --ink-muted:   #898781;
+    --hairline:    #2c2c2a;
+    --border:      rgba(255,255,255,0.10);
+    --accent:      #3987e5;
+    --accent-track:#0d366b;
+    --good:        #0ca30c;
+    --good-text:   #0ca30c;
+    --critical:    #d03b3b;
+    --serious:     #ec835a;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--page); color: var(--ink);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 24px 20px 64px; }
+
+  /* ---- header & controls ---- */
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 6px; }
+  h1 { font-size: 20px; font-weight: 650; margin: 0; }
+  #theme-toggle {
+    margin-left: auto; display: inline-flex; align-items: center;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 999px; padding: 3px; gap: 2px;
+  }
+  #theme-toggle button {
+    font: inherit; font-size: 12.5px; font-weight: 600; line-height: 1;
+    color: var(--ink-2); background: transparent; border: none;
+    border-radius: 999px; padding: 6px 14px; cursor: pointer;
+  }
+  #theme-toggle button:hover { color: var(--ink); }
+  #theme-toggle button.active {
+    color: #fff; background: var(--accent); cursor: default;
+  }
+  .sub { color: var(--ink-2); font-size: 13px; margin: 0 0 16px; }
+
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; margin-bottom: 18px;
+  }
+  .controls label { color: var(--ink-2); font-size: 12.5px; display: flex; align-items: center; gap: 6px; }
+  .controls select, .controls input {
+    font: inherit; color: var(--ink); background: var(--page);
+    border: 1px solid var(--hairline); border-radius: 7px; padding: 5px 8px;
+  }
+  .controls input[type="number"] { width: 74px; }
+  button.run {
+    font: inherit; font-weight: 600; color: #fff; background: var(--accent);
+    border: none; border-radius: 8px; padding: 7px 18px; cursor: pointer;
+  }
+  button.run:disabled { opacity: .55; cursor: default; }
+  #status { color: var(--ink-2); font-size: 12.5px; }
+  #status.error { color: var(--critical); }
+  .spinner {
+    display: inline-block; width: 12px; height: 12px; border-radius: 50%;
+    border: 2px solid var(--accent-track); border-top-color: var(--accent);
+    animation: spin .8s linear infinite; vertical-align: -2px; margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---- stat tiles ---- */
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 22px; }
+  .tile {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .tile .label { color: var(--ink-2); font-size: 12px; margin-bottom: 4px; }
+  .tile .value { font-size: 22px; font-weight: 600; }
+
+  /* ---- section cards & tables ---- */
+  section.card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 18px 8px; margin-bottom: 26px;
+  }
+  section.card h2 { font-size: 15px; font-weight: 650; margin: 0 0 2px; display: flex; gap: 10px; align-items: center; }
+  section.card .caption { color: var(--ink-2); font-size: 12.5px; margin: 0 0 12px; }
+  .side-key { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+  .tbl-scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; }
+  th {
+    text-align: left; color: var(--ink-muted); font-size: 11.5px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .04em;
+    padding: 8px 10px; border-bottom: 1px solid var(--hairline); white-space: nowrap;
+  }
+  th.num, td.num { text-align: right; }
+  td {
+    padding: 9px 10px; border-bottom: 1px solid var(--hairline);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  tr.row { cursor: pointer; }
+  tr.row:hover td { background: rgba(42,120,214,0.06); }
+  tr.row.open td { background: rgba(42,120,214,0.09); }
+  td.tkr { font-weight: 650; }
+  td.co { color: var(--ink-2); max-width: 230px; overflow: hidden; text-overflow: ellipsis; }
+  .chev { color: var(--ink-muted); font-size: 11px; display: inline-block; transition: transform .15s; }
+  tr.row.open .chev { transform: rotate(90deg); }
+
+  /* composite meter inside the table */
+  .score-cell { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+  .meter { display: inline-block; width: 86px; height: 8px; border-radius: 4px; background: var(--accent-track); overflow: hidden; }
+  .meter > i { display: block; height: 100%; background: var(--accent); border-radius: 0 4px 4px 0; }
+
+  .badge {
+    font-size: 11px; font-weight: 600; border-radius: 999px; padding: 2px 9px;
+    display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
+  }
+  .badge.strict   { background: var(--good-tint);     color: var(--good-text); }
+  .badge.backfill { background: var(--serious-tint);  color: var(--ink-2); }
+
+  /* ---- drill-down panel ---- */
+  tr.detail > td { background: var(--page); padding: 16px 18px 20px; white-space: normal; }
+  .verdict { font-size: 13px; margin: 0 0 14px; color: var(--ink); }
+  .verdict .formula { color: var(--ink-2); }
+
+  .dd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 860px) { .dd-grid { grid-template-columns: 1fr; } }
+  .dd-block h3 {
+    font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--ink-muted); margin: 0 0 10px;
+  }
+
+  .checks { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .check { display: flex; align-items: baseline; gap: 8px; font-size: 13px; }
+  .check .mark { font-weight: 700; width: 14px; text-align: center; }
+  .check.pass .mark { color: var(--good); }
+  .check.fail .mark { color: var(--critical); }
+  .check .lbl { font-weight: 550; }
+  .check .why { color: var(--ink-muted); font-size: 12px; }
+  .check-group { color: var(--ink-muted); font-size: 11.5px; margin: 8px 0 2px; font-style: italic; }
+
+  .comp { margin-bottom: 12px; }
+  .comp .head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+  .comp .lbl { font-weight: 550; font-size: 13px; }
+  .comp .wt { color: var(--ink-muted); font-size: 11.5px; }
+  .comp .val { margin-left: auto; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .comp .meter { width: 100%; }
+  .comp .why { color: var(--ink-muted); font-size: 12px; margin-top: 3px; }
+
+  .raw { color: var(--ink-2); font-size: 12.5px; margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--hairline); }
+
+  .empty { color: var(--ink-muted); padding: 24px 10px 28px; text-align: center; font-size: 13.5px; }
+  footer { color: var(--ink-muted); font-size: 12px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Stock Hunt</h1>
+    <div id="theme-toggle" role="radiogroup" aria-label="Color theme">
+      <button data-mode="light" aria-checked="false" role="radio">Light</button>
+      <button data-mode="dark" aria-checked="false" role="radio">Dark</button>
+    </div>
+  </header>
+  <p class="sub">US long/short scanner &mdash; fundamentals + momentum composite. Click any row to see exactly why it made the list.</p>
+
+  <div class="controls">
+    <label>Universe
+      <select id="universe">
+        <option value="sp500">S&amp;P 500</option>
+        <option value="nasdaq100">Nasdaq-100</option>
+      </select>
+    </label>
+    <label>Limit <input id="limit" type="number" min="1" placeholder="all"></label>
+    <label>Top N <input id="topn" type="number" min="1" max="50" value="10"></label>
+    <label>Sector
+      <select id="sector" title="Filter results by principal business activity — re-ranks instantly from the last scan, no refetch">
+        <option value="">All sectors</option>
+      </select>
+    </label>
+    <button class="run" id="run">Run scan</button>
+    <span id="status"></span>
+  </div>
+
+  <div class="tiles" id="tiles" hidden>
+    <div class="tile"><div class="label">Universe</div><div class="value" id="t-universe">–</div></div>
+    <div class="tile"><div class="label">Tickers scored</div><div class="value" id="t-scanned">–</div></div>
+    <div class="tile"><div class="label">Strict long passes</div><div class="value" id="t-long">–</div></div>
+    <div class="tile"><div class="label">Strict short passes</div><div class="value" id="t-short">–</div></div>
+    <div class="tile"><div class="label">Scan time</div><div class="value" id="t-when" style="font-size:15px">–</div></div>
+  </div>
+
+  <section class="card">
+    <h2><span class="side-key" style="background:var(--good)"></span>Top long candidates</h2>
+    <p class="caption">Bullish: revenue growth, positive EPS, healthy leverage, price above both SMAs, RSI 50–65.</p>
+    <div class="tbl-scroll"><table id="tbl-long"></table></div>
+  </section>
+
+  <section class="card">
+    <h2><span class="side-key" style="background:var(--critical)"></span>Top short candidates</h2>
+    <p class="caption">Bearish: at least one fundamental weakness, price below both SMAs, RSI 35–50.</p>
+    <div class="tbl-scroll"><table id="tbl-short"></table></div>
+  </section>
+
+  <footer>Data: Yahoo Finance via yfinance. Screening output — not investment advice.</footer>
+</div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+const fmt = {
+  price: v => v == null ? "N/A" : v.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2}),
+  pct1:  v => v == null ? "N/A" : (v >= 0 ? "+" : "") + v.toFixed(1) + "%",
+  n1:    v => v == null ? "N/A" : v.toFixed(1),
+  pe:    v => (v == null || v <= 0) ? "N/A" : v.toFixed(1),
+  mcap:  v => v == null ? "N/A" : (v >= 1e12 ? "$" + (v/1e12).toFixed(2) + "T" : "$" + (v/1e9).toFixed(1) + "B"),
+  vol:   v => v == null ? "N/A" : (v/1e6).toFixed(1) + "M/day",
+  when:  iso => iso ? new Date(iso).toLocaleString() : "–",
+};
+
+function meter(score, width) {
+  return `<span class="meter" ${width ? "" : ""}><i style="width:${Math.max(0, Math.min(100, score))}%"></i></span>`;
+}
+
+function checksHtml(checks) {
+  const requiredRows = checks.filter(c => c.group === "required");
+  const anyOne = checks.filter(c => c.group === "any_one");
+  const row = c => `
+    <div class="check ${c.passed ? "pass" : "fail"}">
+      <span class="mark">${c.passed ? "✓" : "✗"}</span>
+      <span class="lbl">${esc(c.label)}</span>
+      <span class="why">${esc(c.detail)}</span>
+    </div>`;
+  let html = "";
+  if (anyOne.length) {
+    html += `<div class="check-group">At least one of these must hold:</div>` + anyOne.map(row).join("");
+    html += `<div class="check-group">And all of these:</div>`;
+  }
+  html += requiredRows.map(row).join("");
+  return html;
+}
+
+function componentsHtml(components) {
+  return components.map(c => `
+    <div class="comp">
+      <div class="head">
+        <span class="lbl">${esc(c.label)}</span>
+        <span class="wt">weight ${(c.weight * 100).toFixed(0)}%</span>
+        <span class="val">${c.score.toFixed(0)}</span>
+      </div>
+      ${meter(c.score)}
+      <div class="why">${esc(c.detail)}</div>
+    </div>`).join("");
+}
+
+function verdictHtml(row, side) {
+  const failed = row.filter_checks.filter(c => !c.passed && c.group === "required")
+    .concat(row.filter_checks.filter(c => c.group === "any_one").every(c => !c.passed)
+            && row.filter_checks.some(c => c.group === "any_one")
+            ? [{label: "any fundamental weakness"}] : []);
+  const f = row.fundamental_score.toFixed(1), t = row.technical_score.toFixed(1);
+  const formula = `<span class="formula">composite ${row.composite_score.toFixed(1)} = 0.5 &times; fundamental ${f} + 0.5 &times; technical ${t}</span>`;
+  if (row.passes_hard_filter) {
+    return `<p class="verdict"><strong>#${row.rank}</strong> &mdash; passed every strict ${side} filter and ranked by composite score. ${formula}</p>`;
+  }
+  const names = failed.map(c => esc(c.label)).join(", ");
+  return `<p class="verdict"><strong>#${row.rank}</strong> &mdash; <em>backfill</em>: fewer than the requested number of names passed every strict filter, so this one is included by composite rank despite failing: ${names || "one or more checks"}. ${formula}</p>`;
+}
+
+function detailHtml(row, side) {
+  return `
+    ${verdictHtml(row, side)}
+    <div class="dd-block" style="margin-bottom:16px">
+      <h3>Hard-filter checklist</h3>
+      <div class="checks">${checksHtml(row.filter_checks)}</div>
+    </div>
+    <div class="dd-grid">
+      <div class="dd-block"><h3>Fundamental score &mdash; ${row.fundamental_score.toFixed(1)}</h3>${componentsHtml(row.fundamental_components)}</div>
+      <div class="dd-block"><h3>Technical score &mdash; ${row.technical_score.toFixed(1)}</h3>${componentsHtml(row.technical_components)}</div>
+    </div>
+    <div class="raw">
+      ${row.sector ? esc(row.sector) + (row.industry ? " / " + esc(row.industry) : "") + " &middot; " : ""}
+      Market cap ${fmt.mcap(row.market_cap)} &middot; Avg volume ${fmt.vol(row.avg_volume_3m)} &middot;
+      Dist from 50-SMA ${fmt.pct1(row.dist_from_50sma_pct)} &middot; EPS ${row.eps == null ? "N/A" : row.eps.toFixed(2)} &middot;
+      EPS growth ${row.eps_growth == null ? "N/A" : fmt.pct1(row.eps_growth * 100)} &middot;
+      Revenue growth ${row.revenue_growth == null ? "N/A" : fmt.pct1(row.revenue_growth * 100)} &middot;
+      D/E ${row.debt_to_equity == null ? "N/A" : row.debt_to_equity.toFixed(0)}
+    </div>`;
+}
+
+function renderTable(el, rows, side) {
+  if (!rows || !rows.length) {
+    el.innerHTML = `<tr><td class="empty">No candidates — run a scan, or clear the sector filter.</td></tr>`;
+    return;
+  }
+  const head = `<thead><tr>
+    <th></th><th>#</th><th>Ticker</th><th>Company</th><th>Sector</th>
+    <th class="num">Price</th><th class="num">RSI(14)</th><th class="num">vs 200-SMA</th>
+    <th class="num">P/E</th><th class="num">Fund</th><th class="num">Tech</th>
+    <th class="num">Composite</th><th>Filter</th>
+  </tr></thead>`;
+  const body = rows.map((r, i) => `
+    <tr class="row" data-side="${side}" data-i="${i}">
+      <td><span class="chev">&#9654;</span></td>
+      <td class="num">${r.rank}</td>
+      <td class="tkr">${esc(r.ticker)}</td>
+      <td class="co" title="${esc(r.name)}">${esc(r.name)}</td>
+      <td class="co" title="${esc(r.industry || "")}">${esc(r.sector || "—")}</td>
+      <td class="num">${fmt.price(r.price)}</td>
+      <td class="num">${fmt.n1(r.rsi14)}</td>
+      <td class="num">${fmt.pct1(r.dist_from_200sma_pct)}</td>
+      <td class="num">${fmt.pe(r.pe_ratio)}</td>
+      <td class="num">${r.fundamental_score.toFixed(0)}</td>
+      <td class="num">${r.technical_score.toFixed(0)}</td>
+      <td class="num"><span class="score-cell">${meter(r.composite_score)}<strong>${r.composite_score.toFixed(1)}</strong></span></td>
+      <td>${r.passes_hard_filter
+            ? '<span class="badge strict">✓ strict</span>'
+            : '<span class="badge backfill">backfill</span>'}</td>
+    </tr>
+    <tr class="detail" hidden><td colspan="13">${detailHtml(r, side)}</td></tr>`).join("");
+  el.innerHTML = head + `<tbody>${body}</tbody>`;
+
+  el.querySelectorAll("tr.row").forEach(tr => tr.addEventListener("click", () => {
+    const detail = tr.nextElementSibling;
+    const open = !detail.hidden;
+    detail.hidden = open;
+    tr.classList.toggle("open", !open);
+  }));
+}
+
+function populateSectors(sectors, selected) {
+  const sel = $("sector");
+  sel.innerHTML = `<option value="">All sectors</option>` +
+    (sectors || []).map(s => `<option value="${esc(s)}"${s === selected ? " selected" : ""}>${esc(s)}</option>`).join("");
+}
+
+function renderResults(data) {
+  $("tiles").hidden = false;
+  $("t-universe").textContent = ({sp500: "S&P 500", nasdaq100: "Nasdaq-100"})[data.universe] || data.universe;
+  $("t-scanned").textContent = `${data.scanned} / ${data.universe_size}`;
+  $("t-long").textContent = data.long.filter(r => r.passes_hard_filter).length;
+  $("t-short").textContent = data.short.filter(r => r.passes_hard_filter).length;
+  $("t-when").textContent = fmt.when(data.generated_at);
+  populateSectors(data.sectors, data.sector_filter || $("sector").value);
+  renderTable($("tbl-long"), data.long, "long");
+  renderTable($("tbl-short"), data.short, "short");
+}
+
+let loadSeq = 0;  // drops out-of-order responses so a slow fetch can't clobber a newer render
+async function loadResults() {
+  const seq = ++loadSeq;
+  try {
+    const params = new URLSearchParams();
+    if ($("sector").value) params.set("sector", $("sector").value);
+    const n = parseInt($("topn").value, 10);
+    if (n > 0) params.set("top_n", n);
+    const qs = params.toString();
+    const r = await fetch("/api/results" + (qs ? "?" + qs : ""));
+    if (!r.ok) return;
+    const data = await r.json();
+    if (seq === loadSeq) renderResults(data);
+  } catch (e) { /* no results yet */ }
+}
+
+$("sector").addEventListener("change", loadResults);
+
+let pollTimer = null;
+function setStatus(html, isError) {
+  $("status").innerHTML = html;
+  $("status").classList.toggle("error", !!isError);
+}
+
+let wasRunning = false;
+async function poll() {
+  try {
+    const s = await (await fetch("/api/status")).json();
+    if (s.status === "running") {
+      wasRunning = true;
+      setStatus(`<span class="spinner"></span>${esc(s.message)}`);
+      $("run").disabled = true;
+      pollTimer = setTimeout(poll, 1500);
+    } else {
+      $("run").disabled = false;
+      if (s.status === "error") setStatus(esc(s.message), true);
+      else if (s.status === "done") {
+        setStatus(esc(s.message));
+        // Only refetch results when a scan actually just finished; the
+        // initial page-load fetch is handled by the loadResults() call below.
+        if (wasRunning) { wasRunning = false; await loadResults(); }
+      }
+    }
+  } catch (e) {
+    setStatus("Cannot reach server.", true);
+    $("run").disabled = false;
+  }
+}
+
+$("run").addEventListener("click", async () => {
+  const body = {
+    universe: $("universe").value,
+    top_n: parseInt($("topn").value || "10", 10),
+  };
+  const lim = parseInt($("limit").value, 10);
+  if (lim > 0) body.limit = lim;
+  const r = await fetch("/api/scan", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
+  if (r.status === 409) { setStatus("A scan is already running.", true); return; }
+  poll();
+});
+
+// ---- theme toggle: segmented Light|Dark control; the explicit choice
+// persists in localStorage and overrides the OS preference until changed ----
+function effectiveTheme() {
+  return document.documentElement.dataset.theme
+      || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+}
+function syncThemeButtons() {
+  const current = effectiveTheme();
+  document.querySelectorAll("#theme-toggle button").forEach(b => {
+    const active = b.dataset.mode === current;
+    b.classList.toggle("active", active);
+    b.setAttribute("aria-checked", active);
+  });
+}
+document.querySelectorAll("#theme-toggle button").forEach(b =>
+  b.addEventListener("click", () => {
+    document.documentElement.dataset.theme = b.dataset.mode;
+    localStorage.setItem("theme", b.dataset.mode);
+    syncThemeButtons();
+  }));
+// Keep the highlight accurate if the OS theme changes while we're following it.
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", syncThemeButtons);
+syncThemeButtons();
+
+loadResults();
+poll();
+</script>
+</body>
+</html>
