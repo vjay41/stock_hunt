@@ -50,8 +50,8 @@ SHORT_RSI_BAND = (30, 45)
 
 MAX_WORKERS = 5
 MIN_REQUEST_INTERVAL = 0.35
-FUNDAMENTALS_RETRIES = 4
-RATE_LIMIT_BACKOFF_BASE = 8.0
+FUNDAMENTALS_RETRIES = 5  # Increased retries
+RATE_LIMIT_BACKOFF_BASE = 10.0 # Increased backoff
 
 PRICE_CHUNK_SIZE = 40
 PRICE_CHUNK_PAUSE = 2.0
@@ -117,6 +117,13 @@ def get_nifty50_tickers() -> list[str]:
         print(f"[WARN] NIFTY 50 scrape failed ({exc}). Using small default list.", file=sys.stderr)
         return ["RELIANCE.NS", "TCS.NS", "HDFCBANK.NS", "INFY.NS", "ICICIBANK.NS"]
 
+def get_nifty500_tickers() -> list[str]:
+    try:
+        return _scrape_wiki_tickers("https://en.wikipedia.org/wiki/NIFTY_500", ["Symbol"], suffix=".NS")
+    except Exception as exc:
+        print(f"[WARN] NIFTY 500 scrape failed ({exc}). Falling back to NIFTY 50.", file=sys.stderr)
+        return get_nifty50_tickers()
+
 def get_sti_tickers() -> list[str]:
     """Returns a hardcoded list of major Straits Times Index (STI) constituents."""
     print("[INFO] Using a hardcoded default list for the Straits Times Index (STI).", file=sys.stderr)
@@ -125,11 +132,17 @@ def get_sti_tickers() -> list[str]:
         "G13.SI", "C09.SI", "S68.SI", "A17U.SI", "9CI.SI"
     ]
 
+def get_ftse_all_share_tickers() -> list[str]:
+    try:
+        return _scrape_wiki_tickers("https://en.wikipedia.org/wiki/FTSE_ST_All-Share_Index", ["Ticker"], suffix=".SI")
+    except Exception as exc:
+        print(f"[WARN] FTSE ST All-Share scrape failed ({exc}). Falling back to STI.", file=sys.stderr)
+        return get_sti_tickers()
+
 def get_us_composite_tickers() -> list[str]:
     """Combines S&P 500 and Nasdaq 100 for a broader US market view."""
     sp500 = get_sp500_tickers()
     nasdaq100 = get_nasdaq100_tickers()
-    # Combine and create a unique list
     return sorted(list(set(sp500 + nasdaq100)))
 
 UNIVERSE_BUILDERS = {
@@ -138,8 +151,14 @@ UNIVERSE_BUILDERS = {
         "sp500": get_sp500_tickers, 
         "nasdaq100": get_nasdaq100_tickers
     },
-    "india": {"nifty50": get_nifty50_tickers},
-    "singapore": {"sti": get_sti_tickers},
+    "india": {
+        "nifty500": get_nifty500_tickers,
+        "nifty50": get_nifty50_tickers
+    },
+    "singapore": {
+        "ftse_all_share": get_ftse_all_share_tickers,
+        "sti": get_sti_tickers
+    },
 }
 
 # --------------------------------------------------------------------------
@@ -214,6 +233,11 @@ def fetch_fundamentals(ticker: str, retries: int = FUNDAMENTALS_RETRIES) -> Opti
         _rate_limiter.wait()
         try:
             info = yf.Ticker(ticker).get_info()
+            
+            # If essential data is missing, raise an error to trigger a retry.
+            if not info or info.get("marketCap") is None or info.get("sector") is None:
+                raise ValueError(f"Incomplete data for {ticker}, retrying...")
+
             return Fundamentals(
                 name=info.get("shortName") or info.get("longName") or ticker,
                 sector=info.get("sector") or "",
@@ -231,7 +255,7 @@ def fetch_fundamentals(ticker: str, retries: int = FUNDAMENTALS_RETRIES) -> Opti
                 if is_rate_limited:
                     time.sleep(RATE_LIMIT_BACKOFF_BASE * (2 ** attempt))
                 else:
-                    time.sleep(0.5 * (attempt + 1))
+                    time.sleep(1.0 * (attempt + 1)) # Increased backoff
                 continue
             if "Not Found" not in str(exc):
                 print(f"[WARN] fundamentals failed for {ticker}: {exc}", file=sys.stderr)
