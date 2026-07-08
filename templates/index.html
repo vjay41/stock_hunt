@@ -72,7 +72,7 @@
     margin: 0; background: var(--page); color: var(--ink);
     font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
   }
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 24px 20px 64px; }
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 24px 20px 64px; }
 
   /* ---- header & controls ---- */
   header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 6px; }
@@ -107,6 +107,7 @@
   button.run {
     font: inherit; font-weight: 600; color: #fff; background: var(--accent);
     border: none; border-radius: 8px; padding: 7px 18px; cursor: pointer;
+    transition: box-shadow .2s;
   }
   button.run:disabled { opacity: .55; cursor: default; }
   #status { color: var(--ink-2); font-size: 12.5px; }
@@ -212,19 +213,24 @@
       <button data-mode="dark" aria-checked="false" role="radio">Dark</button>
     </div>
   </header>
-  <p class="sub">US long/short scanner &mdash; fundamentals + momentum composite. Click any row to see exactly why it made the list.</p>
+  <p class="sub">A multi-market stock scanner for long/short candidates.</p>
 
   <div class="controls">
-    <label>Universe
-      <select id="universe">
-        <option value="sp500">S&amp;P 500</option>
-        <option value="nasdaq100">Nasdaq-100</option>
+    <label>Market
+      <select id="market">
+        <option value="us">US</option>
+        <option value="india">India</option>
+        <option value="singapore">Singapore</option>
       </select>
     </label>
-    <label>Limit <input id="limit" type="number" min="1" placeholder="all"></label>
+    <label>Universe
+      <select id="universe"></select>
+    </label>
     <label>Top N <input id="topn" type="number" min="1" max="50" value="10"></label>
+    <label>Min Price <input id="min_price" type="number" min="0" placeholder="any"></label>
+    <label>Max Price <input id="max_price" type="number" min="0" placeholder="any"></label>
     <label>Sector
-      <select id="sector" title="Filter results by principal business activity — re-ranks instantly from the last scan, no refetch">
+      <select id="sector" title="Filter results by principal business activity">
         <option value="">All sectors</option>
       </select>
     </label>
@@ -242,13 +248,13 @@
 
   <section class="card">
     <h2><span class="side-key" style="background:var(--good)"></span>Top long candidates</h2>
-    <p class="caption">Bullish: revenue growth, positive EPS, healthy leverage, price above both SMAs, RSI 50–65.</p>
+    <p class="caption" id="long-caption"></p>
     <div class="tbl-scroll"><table id="tbl-long"></table></div>
   </section>
 
   <section class="card">
     <h2><span class="side-key" style="background:var(--critical)"></span>Top short candidates</h2>
-    <p class="caption">Bearish: at least one fundamental weakness, price below both SMAs, RSI 35–50.</p>
+    <p class="caption" id="short-caption"></p>
     <div class="tbl-scroll"><table id="tbl-short"></table></div>
   </section>
 
@@ -265,10 +271,18 @@ const fmt = {
   pct1:  v => v == null ? "N/A" : (v >= 0 ? "+" : "") + v.toFixed(1) + "%",
   n1:    v => v == null ? "N/A" : v.toFixed(1),
   pe:    v => (v == null || v <= 0) ? "N/A" : v.toFixed(1),
-  mcap:  v => v == null ? "N/A" : (v >= 1e12 ? "$" + (v/1e12).toFixed(2) + "T" : "$" + (v/1e9).toFixed(1) + "B"),
+  mcap:  v => v == null ? "N/A" : (v >= 1e12 ? "$" + (v/1e12).toFixed(2) + "T" : (v >= 1e9 ? "$" + (v/1e9).toFixed(1) + "B" : "$" + (v/1e6).toFixed(1) + "M")),
   vol:   v => v == null ? "N/A" : (v/1e6).toFixed(1) + "M/day",
   when:  iso => iso ? new Date(iso).toLocaleString() : "–",
 };
+
+const UNIVERSE_NAMES = {
+    us: {sp500: "S&P 500", nasdaq100: "Nasdaq-100"},
+    india: {nifty50: "NIFTY 50"},
+    singapore: {sti: "Straits Times Index"},
+};
+
+let ALL_SECTORS = [];
 
 function meter(score, width) {
   return `<span class="meter" ${width ? "" : ""}><i style="width:${Math.max(0, Math.min(100, score))}%"></i></span>`;
@@ -306,17 +320,14 @@ function componentsHtml(components) {
 }
 
 function verdictHtml(row, side) {
-  const failed = row.filter_checks.filter(c => !c.passed && c.group === "required")
-    .concat(row.filter_checks.filter(c => c.group === "any_one").every(c => !c.passed)
-            && row.filter_checks.some(c => c.group === "any_one")
-            ? [{label: "any fundamental weakness"}] : []);
   const f = row.fundamental_score.toFixed(1), t = row.technical_score.toFixed(1);
   const formula = `<span class="formula">composite ${row.composite_score.toFixed(1)} = 0.5 &times; fundamental ${f} + 0.5 &times; technical ${t}</span>`;
   if (row.passes_hard_filter) {
     return `<p class="verdict"><strong>#${row.rank}</strong> &mdash; passed every strict ${side} filter and ranked by composite score. ${formula}</p>`;
   }
+  const failed = row.filter_checks.filter(c => !c.passed);
   const names = failed.map(c => esc(c.label)).join(", ");
-  return `<p class="verdict"><strong>#${row.rank}</strong> &mdash; <em>backfill</em>: fewer than the requested number of names passed every strict filter, so this one is included by composite rank despite failing: ${names || "one or more checks"}. ${formula}</p>`;
+  return `<p class="verdict"><strong>#${row.rank}</strong> &mdash; <em>backfill</em>: did not pass all strict filters (failed: ${names}). Included by composite rank. ${formula}</p>`;
 }
 
 function detailHtml(row, side) {
@@ -342,7 +353,7 @@ function detailHtml(row, side) {
 
 function renderTable(el, rows, side) {
   if (!rows || !rows.length) {
-    el.innerHTML = `<tr><td class="empty">No candidates — run a scan, or clear the sector filter.</td></tr>`;
+    el.innerHTML = `<tr><td class="empty">No candidates found.</td></tr>`;
     return;
   }
   const head = `<thead><tr>
@@ -380,46 +391,112 @@ function renderTable(el, rows, side) {
   }));
 }
 
-function populateSectors(sectors, selected) {
+function populateSectors(selected) {
   const sel = $("sector");
   sel.innerHTML = `<option value="">All sectors</option>` +
-    (sectors || []).map(s => `<option value="${esc(s)}"${s === selected ? " selected" : ""}>${esc(s)}</option>`).join("");
+    (ALL_SECTORS || []).map(s => `<option value="${esc(s)}"${s === selected ? " selected" : ""}>${esc(s)}</option>`).join("");
+}
+
+function updateUniverseOptions() {
+    const market = $("market").value;
+    const universes = UNIVERSE_NAMES[market];
+    const sel = $("universe");
+    sel.innerHTML = Object.keys(universes).map(k => `<option value="${k}">${universes[k]}</option>`).join("");
 }
 
 function renderResults(data) {
   $("tiles").hidden = false;
-  $("t-universe").textContent = ({sp500: "S&P 500", nasdaq100: "Nasdaq-100"})[data.universe] || data.universe;
+  const uniName = UNIVERSE_NAMES[data.market][data.universe] || data.universe;
+  $("t-universe").textContent = `${uniName} (${data.market.toUpperCase()})`;
   $("t-scanned").textContent = `${data.scanned} / ${data.universe_size}`;
   $("t-long").textContent = data.long.filter(r => r.passes_hard_filter).length;
   $("t-short").textContent = data.short.filter(r => r.passes_hard_filter).length;
   $("t-when").textContent = fmt.when(data.generated_at);
-  populateSectors(data.sectors, data.sector_filter || $("sector").value);
+
+  $("market").value = data.market;
+  updateUniverseOptions();
+  $("universe").value = data.universe;
+  $("topn").value = data.top_n;
+  $("min_price").value = data.min_price || "";
+  $("max_price").value = data.max_price || "";
+  populateSectors(data.sector_filter);
+  saveFilterSettings();
+
+  const longCaption = `Bullish: revenue growth, positive EPS, healthy leverage, price above both SMAs, RSI ${data.criteria.long.rsi_band.join("–")}.`;
+  const shortCaption = `Bearish: at least one fundamental weakness, price below both SMAs, RSI ${data.criteria.short.rsi_band.join("–")}.`;
+  $("long-caption").textContent = longCaption;
+  $("short-caption").textContent = shortCaption;
+
   renderTable($("tbl-long"), data.long, "long");
   renderTable($("tbl-short"), data.short, "short");
 }
 
-let loadSeq = 0;  // drops out-of-order responses so a slow fetch can't clobber a newer render
+let loadSeq = 0;
 async function loadResults() {
   const seq = ++loadSeq;
   try {
-    const params = new URLSearchParams();
-    if ($("sector").value) params.set("sector", $("sector").value);
-    const n = parseInt($("topn").value, 10);
-    if (n > 0) params.set("top_n", n);
-    const qs = params.toString();
-    const r = await fetch("/api/results" + (qs ? "?" + qs : ""));
-    if (!r.ok) return;
+    const r = await fetch("/api/results");
+    if (!r.ok) {
+      if (seq === loadSeq) setStatus("Could not load last scan results.", true);
+      return;
+    }
     const data = await r.json();
     if (seq === loadSeq) renderResults(data);
-  } catch (e) { /* no results yet */ }
+  } catch (e) {
+    // Expected on first run
+  }
 }
 
-$("sector").addEventListener("change", loadResults);
+async function loadAllSectors() {
+    try {
+        const r = await fetch("/api/sectors");
+        if (!r.ok) return;
+        ALL_SECTORS = await r.json();
+        populateSectors();
+    } catch (e) {
+        console.error("Could not load sector list.", e);
+    }
+}
+
+function saveFilterSettings() {
+    const settings = {
+        market: $("market").value,
+        universe: $("universe").value,
+        topn: $("topn").value,
+        min_price: $("min_price").value,
+        max_price: $("max_price").value,
+        sector: $("sector").value,
+    };
+    localStorage.setItem("filterSettings", JSON.stringify(settings));
+}
+
+function loadFilterSettings() {
+    const settings = JSON.parse(localStorage.getItem("filterSettings"));
+    if (settings) {
+        $("market").value = settings.market || "us";
+        updateUniverseOptions();
+        $("universe").value = settings.universe || Object.keys(UNIVERSE_NAMES[$("market").value])[0];
+        $("topn").value = settings.topn || "10";
+        $("min_price").value = settings.min_price || "";
+        $("max_price").value = settings.max_price || "";
+        if (settings.sector) $("sector").value = settings.sector;
+    }
+}
+
+function onFilterChange() {
+    if (!$("run").disabled) {
+        setStatus("Filters changed. Click 'Run scan' to apply.");
+        $("run").style.boxShadow = "0 0 0 3px var(--accent-track)";
+    }
+}
 
 let pollTimer = null;
 function setStatus(html, isError) {
   $("status").innerHTML = html;
   $("status").classList.toggle("error", !!isError);
+  if (!html.startsWith("Filters changed")) {
+      $("run").style.boxShadow = "none";
+  }
 }
 
 let wasRunning = false;
@@ -433,12 +510,20 @@ async function poll() {
       pollTimer = setTimeout(poll, 1500);
     } else {
       $("run").disabled = false;
-      if (s.status === "error") setStatus(esc(s.message), true);
-      else if (s.status === "done") {
-        setStatus(esc(s.message));
-        // Only refetch results when a scan actually just finished; the
-        // initial page-load fetch is handled by the loadResults() call below.
-        if (wasRunning) { wasRunning = false; await loadResults(); }
+      if (s.status === "error") {
+        setStatus(esc(s.message), true);
+      } else if (s.status === "done") {
+        if (wasRunning) {
+            setStatus(esc(s.message));
+            await loadResults();
+            wasRunning = false;
+        } else if (s.has_results) {
+            setStatus("");
+        } else {
+            setStatus("Ready to scan.");
+        }
+      } else {
+        setStatus("Ready.");
       }
     }
   } catch (e) {
@@ -449,18 +534,32 @@ async function poll() {
 
 $("run").addEventListener("click", async () => {
   const body = {
+    market: $("market").value,
     universe: $("universe").value,
     top_n: parseInt($("topn").value || "10", 10),
+    sector: $("sector").value || null,
+    min_price: $("min_price").value || null,
+    max_price: $("max_price").value || null,
   };
-  const lim = parseInt($("limit").value, 10);
-  if (lim > 0) body.limit = lim;
+
   const r = await fetch("/api/scan", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
-  if (r.status === 409) { setStatus("A scan is already running.", true); return; }
+  if (r.status === 409) { setStatus("A scan is already in progress.", true); return; }
+  if (!r.ok) { setStatus("Failed to start scan.", true); return; }
   poll();
 });
 
-// ---- theme toggle: segmented Light|Dark control; the explicit choice
-// persists in localStorage and overrides the OS preference until changed ----
+// ---- Event Listeners ----
+$("market").addEventListener("change", () => {
+    updateUniverseOptions();
+    onFilterChange();
+});
+$("universe").addEventListener("change", onFilterChange);
+$("topn").addEventListener("change", onFilterChange);
+$("min_price").addEventListener("change", onFilterChange);
+$("max_price").addEventListener("change", onFilterChange);
+$("sector").addEventListener("change", onFilterChange);
+
+// ---- Theme Toggle ----
 function effectiveTheme() {
   return document.documentElement.dataset.theme
       || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
@@ -479,10 +578,14 @@ document.querySelectorAll("#theme-toggle button").forEach(b =>
     localStorage.setItem("theme", b.dataset.mode);
     syncThemeButtons();
   }));
-// Keep the highlight accurate if the OS theme changes while we're following it.
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", syncThemeButtons);
-syncThemeButtons();
 
+
+// ---- Initial Load ----
+syncThemeButtons();
+updateUniverseOptions();
+loadAllSectors();
+loadFilterSettings();
 loadResults();
 poll();
 </script>
